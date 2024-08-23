@@ -1,0 +1,44 @@
+const panorama = new PANOLENS.ImagePanorama( 'images/aitgate.jpeg' );
+const panorama2 = new PANOLENS.ImagePanorama('images/reception.jpeg');
+const panorama3 = new PANOLENS.ImagePanorama('images/receptionmid.jpeg');
+const panorama4 = new PANOLENS.ImagePanorama('images/parking.jpeg');
+const panorama5 = new PANOLENS.ImagePanorama('images/leftentry.jpeg');
+const panorama6 = new PANOLENS.ImagePanorama('images/acadcentre.jpeg');
+const panorama7 = new PANOLENS.ImagePanorama('images/towardsoac.jpeg');
+const panorama8 = new PANOLENS.ImagePanorama('images/xerox.jpeg');
+const panorama9 = new PANOLENS.ImagePanorama('images/oactree.jpeg');
+const panorama10 = new PANOLENS.ImagePanorama('images/oac.jpeg');
+let imageContainer = document.querySelector('.image-container');
+
+
+var infospotPositions = [
+    new THREE.Vector3(-2136.06, 16.30, 890.14),
+    new THREE.Vector3(-3136.06, 296.30, -4290.14),  
+    new THREE.Vector3(-2136, 16, 890), 
+    new THREE.Vector3(-1500, 30, 890), //parking right
+  ];
+
+const viewer = new PANOLENS.Viewer({
+    container: imageContainer,
+    autoRotate: false,
+    autoRotateSpeed: 0.3,
+    controlBar: true,
+});
+
+panorama.link( panorama2, infospotPositions[0]); //ait to recp
+panorama2.link( panorama3, infospotPositions[1]); //recp to recpmid
+panorama3.link( panorama2 , infospotPositions[1]); //recpmid to recp
+panorama3.link( panorama4 ,infospotPositions[3] ); //recpmid to park
+panorama4.link( panorama3 ,infospotPositions[1]);
+panorama3.link(panorama5 , infospotPositions[2]); //mid to left entry
+panorama5.link(panorama6, infospotPositions[1] ); //leftentry to acadc
+panorama5.link(panorama7 , infospotPositions[0]);//leftentry to xeroxmid
+panorama7.link( panorama5 , infospotPositions[2]);//xeroxmid to left
+panorama7.link(panorama8 , infospotPositions[1]);//xeroxmid to xerox
+panorama8.link(panorama7 , infospotPositions[1]);//xerox to xeroxmid
+panorama8.link(panorama9 , infospotPositions[0]);//xerox to oactree
+panorama9.link( panorama8, infospotPositions[1]);//oactree to xerox
+panorama9.link( panorama10 ,  infospotPositions[0]);//oactree to oac
+panorama10.link(panorama9,infospotPositions[1]);
+viewer.add( panorama,panorama2,panorama3,panorama4,panorama5,panorama6 ,panorama7,panorama8,panorama9,panorama10);
+

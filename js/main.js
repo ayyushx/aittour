@@ -14,7 +14,7 @@ let imageContainer = document.querySelector('.image-container');
 
 var infospotPositions = [
     new THREE.Vector3(2500.386,50.669,200),
-    new THREE.Vector3(1681.414, -4000.661, -985.730),  
+    new THREE.Vector3(-2136, 16, 890),  
     new THREE.Vector3(-2136, 16, 890), 
     new THREE.Vector3(-1500, 30, 890), //parking right
     new THREE.Vector3(1676.9529786428825, 5800.410002336587, 2032.907649701389),

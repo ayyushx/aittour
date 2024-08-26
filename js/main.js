@@ -53,8 +53,13 @@ viewer.add( panorama,panorama2,panorama3,panorama4,panorama5,panorama6 ,panorama
 let initialAlpha = null;
 let currentQuaternion = new THREE.Quaternion();
 let targetQuaternion = new THREE.Quaternion();
+let needsUpdate = false;
 
-window.addEventListener('deviceorientation', (event) => {
+const dampingFactor = 0.15; // Controls the smoothness (lower = smoother)
+const threshold = 0.01; // Minimum change to trigger an update
+
+// Debounced device orientation event handler for performance
+const handleOrientationEvent = (event) => {
   // Capture the initial alpha to use as a reference
   if (initialAlpha === null) {
     initialAlpha = event.alpha;
@@ -66,21 +71,47 @@ window.addEventListener('deviceorientation', (event) => {
   const gamma = event.gamma ? THREE.Math.degToRad(event.gamma) : 0;
 
   // Calculate the target rotation quaternion
-  targetQuaternion.setFromEuler(new THREE.Euler(-beta, -alpha, gamma, 'YXZ'));
+  const newQuaternion = new THREE.Quaternion();
+  newQuaternion.setFromEuler(new THREE.Euler(-beta, -alpha, gamma, 'YXZ'));
+
+  // Check if the rotation change is significant enough
+  if (newQuaternion.angleTo(targetQuaternion) > threshold) {
+    targetQuaternion.copy(newQuaternion);
+    needsUpdate = true; // Mark that an update is needed
+  }
+};
+
+// Throttling orientation event handling for performance
+let orientationTimeout;
+window.addEventListener('deviceorientation', (event) => {
+  if (!orientationTimeout) {
+    orientationTimeout = setTimeout(() => {
+      handleOrientationEvent(event);
+      orientationTimeout = null;
+    }, 50); // Adjust this interval as needed
+  }
 }, true);
 
 function animate() {
   requestAnimationFrame(animate);
 
-  // Smoothly interpolate between current and target quaternion
-  THREE.Quaternion.slerp(currentQuaternion, targetQuaternion, currentQuaternion, 0.1);
+  // Smoothly interpolate between current and target quaternion with damping
+  if (needsUpdate) {
+    THREE.Quaternion.slerp(currentQuaternion, targetQuaternion, currentQuaternion, dampingFactor);
 
-  // Apply the smoothly interpolated rotation to the panorama
-  panorama.rotation.setFromQuaternion(currentQuaternion);
+    // Apply the interpolated rotation to the panorama
+    panorama.rotation.setFromQuaternion(currentQuaternion);
+
+    // Stop updating if the change is minimal
+    if (currentQuaternion.angleTo(targetQuaternion) < threshold) {
+      needsUpdate = false;
+    }
+  }
 }
 
 // Start the animation loop
 animate();
+
 
 
 

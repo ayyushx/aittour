@@ -50,43 +50,53 @@ panorama11.link(panorama,infospotPositions[4]);
 viewer.add( panorama,panorama2,panorama3,panorama4,panorama5,panorama6 ,panorama7,panorama8,panorama9,panorama10,panorama11);
 
 //To enable the rotation according to the orientation
-let currentQuaternion = new THREE.Quaternion(); // Holds the current rotation
-let targetQuaternion = new THREE.Quaternion(); // Target rotation quaternion
-let needsUpdate = false; // Flag to indicate if an update is required
+let initialAlpha = null;
+let currentQuaternion = new THREE.Quaternion();
+let targetQuaternion = new THREE.Quaternion();
+let needsUpdate = false;
 
-const dampingFactor = 0.1; // Controls the smoothness of the rotation (lower value = smoother)
-const threshold = 0.001; // Minimum change required to trigger an update
+const dampingFactor = 0.15; // Controls the smoothness (lower = smoother)
+const threshold = 0.01; // Minimum change to trigger an update
 
-// Function to handle device orientation and calculate the rotation
-function handleOrientationEvent(event) {
-  const alpha = event.alpha ? THREE.Math.degToRad(event.alpha) : 0;
+// Debounced device orientation event handler for performance
+const handleOrientationEvent = (event) => {
+  // Capture the initial alpha to use as a reference
+  if (initialAlpha === null) {
+    initialAlpha = event.alpha;
+  }
+
+  // Normalize alpha to start at zero and invert the direction
+  const alpha = event.alpha ? THREE.Math.degToRad(initialAlpha - event.alpha) : 0;
   const beta = event.beta ? THREE.Math.degToRad(event.beta) : 0;
   const gamma = event.gamma ? THREE.Math.degToRad(event.gamma) : 0;
 
-  // Create a quaternion based on the current orientation
+  // Calculate the target rotation quaternion
   const newQuaternion = new THREE.Quaternion();
-  newQuaternion.setFromEuler(new THREE.Euler(beta, alpha, -gamma, 'YXZ'));
+  newQuaternion.setFromEuler(new THREE.Euler(-beta, -alpha, gamma, 'YXZ'));
 
-  // Set the target rotation quaternion
-  targetQuaternion.copy(newQuaternion);
-
-  // Trigger an update if the rotation change is significant
-  if (currentQuaternion.angleTo(targetQuaternion) > threshold) {
-    needsUpdate = true;
+  // Check if the rotation change is significant enough
+  if (newQuaternion.angleTo(targetQuaternion) > threshold) {
+    targetQuaternion.copy(newQuaternion);
+    needsUpdate = true; // Mark that an update is needed
   }
-}
+};
 
-// Event listener to capture device orientation changes
+// Throttling orientation event handling for performance
+let orientationTimeout;
 window.addEventListener('deviceorientation', (event) => {
-  handleOrientationEvent(event);
+  if (!orientationTimeout) {
+    orientationTimeout = setTimeout(() => {
+      handleOrientationEvent(event);
+      orientationTimeout = null;
+    }, 50); // Adjust this interval as needed
+  }
 }, true);
 
-// Function to animate and apply smooth rotation
 function animate() {
   requestAnimationFrame(animate);
 
+  // Smoothly interpolate between current and target quaternion with damping
   if (needsUpdate) {
-    // Smoothly interpolate between the current and target rotations
     THREE.Quaternion.slerp(currentQuaternion, targetQuaternion, currentQuaternion, dampingFactor);
 
     // Apply the interpolated rotation to the panorama
@@ -101,6 +111,7 @@ function animate() {
 
 // Start the animation loop
 animate();
+
 
 
 

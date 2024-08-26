@@ -51,6 +51,8 @@ viewer.add( panorama,panorama2,panorama3,panorama4,panorama5,panorama6 ,panorama
 
 //To enable the rotation according to the orientation
 let initialAlpha = null;
+let currentQuaternion = new THREE.Quaternion();
+let targetQuaternion = new THREE.Quaternion();
 
 window.addEventListener('deviceorientation', (event) => {
   // Capture the initial alpha to use as a reference
@@ -58,17 +60,27 @@ window.addEventListener('deviceorientation', (event) => {
     initialAlpha = event.alpha;
   }
 
-  // Normalize alpha to start at zero
-  const alpha = event.alpha ? THREE.Math.degToRad(event.alpha - initialAlpha) : 0;
+  // Normalize alpha to start at zero and invert the direction
+  const alpha = event.alpha ? THREE.Math.degToRad(initialAlpha - event.alpha) : 0;
   const beta = event.beta ? THREE.Math.degToRad(event.beta) : 0;
   const gamma = event.gamma ? THREE.Math.degToRad(event.gamma) : 0;
 
-  // Calculate the rotation quaternion
-  const quaternion = new THREE.Quaternion();
-  quaternion.setFromEuler(new THREE.Euler(beta, alpha, -gamma, 'YXZ'));
-
-  // Apply the rotation to the panorama
-  panorama.rotation.setFromQuaternion(quaternion);
+  // Calculate the target rotation quaternion
+  targetQuaternion.setFromEuler(new THREE.Euler(-beta, -alpha, gamma, 'YXZ'));
 }, true);
+
+function animate() {
+  requestAnimationFrame(animate);
+
+  // Smoothly interpolate between current and target quaternion
+  THREE.Quaternion.slerp(currentQuaternion, targetQuaternion, currentQuaternion, 0.1);
+
+  // Apply the smoothly interpolated rotation to the panorama
+  panorama.rotation.setFromQuaternion(currentQuaternion);
+}
+
+// Start the animation loop
+animate();
+
 
 

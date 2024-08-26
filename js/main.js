@@ -50,8 +50,16 @@ panorama11.link(panorama,infospotPositions[4]);
 viewer.add( panorama,panorama2,panorama3,panorama4,panorama5,panorama6 ,panorama7,panorama8,panorama9,panorama10,panorama11);
 
 //To enable the rotation according to the orientation
+let initialAlpha = null;
+
 window.addEventListener('deviceorientation', (event) => {
-  const alpha = event.alpha ? THREE.Math.degToRad(event.alpha) : 0;
+  // Capture the initial alpha to use as a reference
+  if (initialAlpha === null) {
+    initialAlpha = event.alpha;
+  }
+
+  // Normalize alpha to start at zero
+  const alpha = event.alpha ? THREE.Math.degToRad(event.alpha - initialAlpha) : 0;
   const beta = event.beta ? THREE.Math.degToRad(event.beta) : 0;
   const gamma = event.gamma ? THREE.Math.degToRad(event.gamma) : 0;
 
@@ -62,4 +70,5 @@ window.addEventListener('deviceorientation', (event) => {
   // Apply the rotation to the panorama
   panorama.rotation.setFromQuaternion(quaternion);
 }, true);
+
 

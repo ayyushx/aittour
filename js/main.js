@@ -50,7 +50,7 @@ panorama11.link(panorama,infospotPositions[4]);
 viewer.add( panorama,panorama2,panorama3,panorama4,panorama5,panorama6 ,panorama7,panorama8,panorama9,panorama10,panorama11);
 
 //To enable the rotation according to the orientation
-let initialAlpha = null;
+let initialQuaternion = null; // Reference quaternion for the initial orientation
 let currentQuaternion = new THREE.Quaternion();
 let targetQuaternion = new THREE.Quaternion();
 let needsUpdate = false;
@@ -58,25 +58,33 @@ let needsUpdate = false;
 const dampingFactor = 0.15; // Controls the smoothness (lower = smoother)
 const threshold = 0.01; // Minimum change to trigger an update
 
+// Function to calculate the angle in degrees between two quaternions
+function calculateRotationAngle(quat1, quat2) {
+  return THREE.Math.radToDeg(2 * Math.acos(quat1.dot(quat2)));
+}
+
 // Debounced device orientation event handler for performance
 const handleOrientationEvent = (event) => {
-  // Capture the initial alpha to use as a reference
-  if (initialAlpha === null) {
-    initialAlpha = event.alpha;
-  }
-
   // Normalize alpha to start at zero and invert the direction
-  const alpha = event.alpha ? THREE.Math.degToRad(initialAlpha - event.alpha) : 0;
+  const alpha = event.alpha ? THREE.Math.degToRad(event.alpha) : 0;
   const beta = event.beta ? THREE.Math.degToRad(event.beta) : 0;
   const gamma = event.gamma ? THREE.Math.degToRad(event.gamma) : 0;
 
-  // Calculate the target rotation quaternion
+  // Calculate the current orientation quaternion
   const newQuaternion = new THREE.Quaternion();
   newQuaternion.setFromEuler(new THREE.Euler(-beta, -alpha, gamma, 'YXZ'));
 
+  // Set the initial quaternion as a reference if it's not already set
+  if (!initialQuaternion) {
+    initialQuaternion = newQuaternion.clone();
+    return; // Skip the first event to set the reference without applying rotation
+  }
+
+  // Calculate the relative rotation quaternion
+  targetQuaternion.copy(newQuaternion).premultiply(initialQuaternion.clone().invert());
+
   // Check if the rotation change is significant enough
   if (newQuaternion.angleTo(targetQuaternion) > threshold) {
-    targetQuaternion.copy(newQuaternion);
     needsUpdate = true; // Mark that an update is needed
   }
 };
@@ -102,6 +110,10 @@ function animate() {
     // Apply the interpolated rotation to the panorama
     panorama.rotation.setFromQuaternion(currentQuaternion);
 
+    // Calculate and log the angle of rotation relative to the initial reference
+    const rotationAngle = calculateRotationAngle(currentQuaternion, initialQuaternion);
+    console.log(`Current Rotation Angle: ${rotationAngle.toFixed(2)}°`);
+
     // Stop updating if the change is minimal
     if (currentQuaternion.angleTo(targetQuaternion) < threshold) {
       needsUpdate = false;
@@ -111,6 +123,7 @@ function animate() {
 
 // Start the animation loop
 animate();
+
 
 
 

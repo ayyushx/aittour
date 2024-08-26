@@ -49,23 +49,6 @@ panorama.link(panorama11 , infospotPositions[1] );
 panorama11.link(panorama,infospotPositions[4]);
 viewer.add( panorama,panorama2,panorama3,panorama4,panorama5,panorama6 ,panorama7,panorama8,panorama9,panorama10,panorama11);
 
-//To enable the rotation according to the orientation
-
-
-function handleOrientationEvent(event) {
-  const alpha = event.alpha ? THREE.Math.degToRad(event.alpha) : 0;
-  const beta = event.beta ? THREE.Math.degToRad(event.beta) : 0;
-  const gamma = event.gamma ? THREE.Math.degToRad(event.gamma) : 0;
-
-  const newQuaternion = new THREE.Quaternion();
-  newQuaternion.setFromEuler(new THREE.Euler(beta, alpha, -gamma, 'YXZ'));
-
-  // Apply the quaternion to the viewer's camera
-  viewer.camera.quaternion.copy(newQuaternion);
-}
-
-init();
-
 
 
 
